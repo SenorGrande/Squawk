@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://172.18.0.3:8090');
+        
+        socket.on('connect', function () {
+            console.log('connected');
+            document.getElementById('divServerStuff').innerHTML += "Connected" + "<br/>";
+        });
+
+        socket.on('error', function (error) {
+            console.log('error:' + error);
+            document.getElementById('divServerStuff').innerHTML += "Error" + "<br/>";
+        });
+
+        socket.on('parrot-event', function (data) {
+            console.log(data);
+            document.getElementById('divParrotStuff').innerHTML += JSON.stringify(data) + "<br/>";
+        });
+
+        socket.on('server-event', function (data) {
+            console.log(data);
+            document.getElementById('divServerStuff').innerHTML += JSON.stringify(data) + "<br/>";
+        });
+        
+        function parrotCommand(command) {
+            // sends it to the WS Server
+            socket.emit('server-event', { cmd: command });
+
+            console.log("sending: " + JSON.stringify({ cmd: command }));
+        }
+    </script>
+</head>
+<body>
+    <button onclick="parrotCommand('takeoff')">server-event takeoff</button> 
+    <button onclick="parrotCommand('land')">server-event land</button>
+    
+    <button onmousedown="parrotCommand('up')" onmouseup="parrotCommand('stop')">server-event up</button>
+    <button onmousedown="parrotCommand('down')" onmouseup="parrotCommand('stop')">server-event down</button>
+    
+    <button onmousedown="parrotCommand('turnleft')" onmouseup="parrotCommand('stop')">server-event turn left</button>
+    <button onmousedown="parrotCommand('turnright')" onmouseup="parrotCommand('stop')">server-event turn right</button>
+
+    <h2>Stuff received from the Parrot:</h2>
+    <div id="divParrotStuff"></div>
+
+    <h2>Stuff sent from the Server:</h2>
+    <div id="divServerStuff"></div>
+</body>
+</html>
