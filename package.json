@@ -2,9 +2,9 @@
     "name": "squawk",
     "version": "0.0.1",
     "description": "Parrot Mambo socket.io app",
-    "main":"app.js",
+    "main": "app.js",
     "scripts": {
-        "start":"node app.js"
+        "start": "node app.js"
     },
     "dependencies": {
         "fs": "0.0.1-security",
@@ -12,4 +12,3 @@
         "socket.io": "^2.1.0"
     }
 }
-

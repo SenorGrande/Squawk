@@ -6,7 +6,7 @@
     <title></title>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-    	var ip = '172.18.0.3';
+    	var ip = '127.0.0.1'; //172.18.0.3 // IP of server
     	var port = '8090';
         var socket = io.connect('http://'+ip+':'+port);
         
@@ -37,6 +37,7 @@
             console.log("sending: " + JSON.stringify({ cmd: command }));
         }
     </script>
+
 </head>
 <body>
     <button onclick="parrotCommand('takeoff')">server-event takeoff</button> 
@@ -48,10 +49,214 @@
     <button onmousedown="parrotCommand('turnleft')" onmouseup="parrotCommand('stop')">server-event turn left</button>
     <button onmousedown="parrotCommand('turnright')" onmouseup="parrotCommand('stop')">server-event turn right</button>
 
+
+    <canvas id="gamearea" style="background-color:black"></canvas>
+    <div id="gamepadPrompt"></div>
+    <div id="gamepadDisplay"></div>
+
+
     <h2>Stuff received from the Parrot:</h2>
     <div id="divParrotStuff"></div>
 
     <h2>Stuff sent from the Server:</h2>
     <div id="divServerStuff"></div>
 </body>
+
+<script>
+    var leftJoy; // Left Joystick on the XBox controller
+    var hasGP = false;
+    var repGP;
+
+    var mousePosition; //track mouse position on mousemove
+    var isMouseDown; //track state of mousedown and up
+
+    var c = document.getElementById("gamearea"); //reference to the canvas element
+    var ctx = c.getContext("2d"); //reference to 2d context
+
+    //add listeners
+    document.addEventListener('mousemove', move, false);
+    document.addEventListener('mousedown', setDraggable, false);
+    document.addEventListener('mouseup', setDraggable, false);
+
+    function move(e) {
+        if (isMouseDown) getMousePosition(e);
+    }
+
+    //set mousedown state
+    function setDraggable(e) {
+        var t = e.type;
+        if (t === "mousedown") {
+            isMouseDown = true;
+            getMousePosition(e); // When the user clicks the mouse but hasn't moved it yet
+        } else if (t === "mouseup") {
+            isMouseDown = false;
+        }
+    }
+
+    function getMousePosition(e) {
+        var rect = c.getBoundingClientRect();
+        mousePosition = {
+            x: Math.round(e.x - rect.left),
+            y: Math.round(e.y - rect.top)
+        }
+    }
+
+    function canGame() {
+        return "getGamepads" in navigator;
+    }
+    
+    var canvas = document.getElementById("gamearea");
+    canvas.width = 800;
+    canvas.height = 400;
+    canvas.jw = canvas.width / 2; // Splitting canvas into 2 sections, 1 for each joystick
+    canvas.jh = canvas.height;
+    
+    var ctx = canvas.getContext("2d"); // ???
+
+    var draw = {
+        clear: function () {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        },
+        
+        circle: function (x, y, radius, col) {
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.fill();
+        }
+    };
+
+    // Joystick Object
+    var joystickObj = function() {
+
+        this.init = function(buff, a1, a2) {
+            this.r = 0.1 * canvas.jw;
+            this.x = buff + canvas.jw / 2;
+            this.y = canvas.jh / 2;
+            this.col = "white";
+
+            this.buffer = buff;
+            this.axis1 = a1;
+            this.axis2 = a2;
+        }
+
+        this.move = function() {
+
+            var gp = navigator.getGamepads()[0]; // Get first connected gamepad
+
+            // TODO this stuff should get passed in
+            // Get joysticks X & Y axis and set circles position in the canvas to joystick axis position
+            if (gp !== null && gp !== undefined) {
+                var axeX = gp.axes[this.axis1];
+                var axeY = gp.axes[this.axis2];
+
+                this.x = this.buffer + axeX * canvas.jw/2 + canvas.jw/2;
+                this.y = axeY * canvas.jw/2 + canvas.jw/2;
+            } 
+
+            // If mouse is not down and no joystick, return to centre of screen
+            if (!isMouseDown && gp === null || !isMouseDown && gp === undefined ) {
+                this.x = this.buffer + canvas.jw/2;
+                this.y = canvas.jh/2;
+                //return;
+            
+            // If mouse is down, move circle to mouses position within the canvas
+            } else if (isMouseDown) {
+                if (mousePosition.x > this.buffer && mousePosition.x < this.buffer + canvas.jw) {
+                    this.x = mousePosition.x;
+                    if (this.x > this.buffer + canvas.jw - this.r) { this.x = this.buffer + canvas.jw - this.r }
+                    else if (this.x < this.buffer + this.r) { this.x = this.buffer + this.r }
+                    this.y = mousePosition.y;
+                    if (this.y > canvas.jh - this.r) { this.y = canvas.jh - this.r }
+                    else if (this.y < this.r) { this.y = this.r }
+                    //return;
+
+                    //parrotCommand("moving");
+                    //parrotCommand("x: " + this.x + " y: " + this.y);
+                    // if y is in certain area, move up, otherwise down
+                    // if x is in certain area, move left, otherwise right
+                    if (this.y < 150) { parrotCommand("up"); }
+                    else if (this.y > 250) { parrotCommand("down"); }
+                    if (this.x < 150) { parrotCommand("turnleft"); }
+                    else if (this.x > 250) { parrotCommand("turnright"); }
+                }
+            }
+        }
+
+        this.draw = function () {
+            draw.circle(this.x, this.y, this.r, this.col); // This draws to the specific canvas
+        }
+    }
+    
+    leftJoy = new joystickObj();
+    leftJoy.init(0, 0, 1); // buffer, x axis, y axis
+
+    //rightJoy = new joystickObj();
+    //rightJoy.init(canvas.jw, 2, 6); // Flight Joystick
+    //rightJoy.init(canvas.jw, 2, 3); // XBOX controller
+    
+    function loop() {
+        draw.clear();
+        
+        leftJoy.draw();
+        leftJoy.move();
+        
+        rightJoy.draw();
+        rightJoy.move();
+    }
+
+    setInterval(loop, 30); // loop
+
+    // Display text information of joystick currently connected
+    function reportOnGamepad() {
+        var gp = navigator.getGamepads()[0];
+        var html = "";
+            html += "id: "+gp.id+"<br/>";
+
+        for(var i=0;i<gp.buttons.length;i++) {
+            html+= "Button "+(i+1)+": ";
+            if(gp.buttons[i].pressed) html+= " pressed";
+            html+= "<br/>";
+        }
+
+        for(var i=0;i<gp.axes.length; i+=2) {
+            html+= "Stick "+(Math.ceil(i/2)+1)+": "+gp.axes[i]+","+gp.axes[i+1]+"<br/>";
+        }
+
+        document.getElementById("gamepadDisplay").innerHTML = html;
+    }
+    
+    //gamepad support
+    if(canGame()) {
+
+        var prompt = "To begin using your gamepad, connect it and press any button!";
+        document.getElementById("gamepadPrompt").innerText = prompt;
+
+        window.addEventListener('gamepadconnected', function(event) {
+            hasGP = true;
+            document.getElementById("gamepadPrompt").innerText = "Gamepad connected!";
+            repGP = window.setInterval(reportOnGamepad,100);
+        });
+
+        window.addEventListener('gamepaddisconnected', function(event) {
+            document.getElementById("gamepadPrompt").innerText = prompt;
+            window.clearInterval(repGP);
+            repGP = null
+        });
+
+        //setup an interval for Chrome
+        var checkGP = window.setInterval(function() {
+            if(navigator.getGamepads()[0]) {
+                if(!hasGP) {
+                    hasGP = true;
+                    document.getElementById("gamepadPrompt").innerText = "Gamepad connected!";
+                    repGP = window.setInterval(reportOnGamepad,100);
+                }
+            }
+        }, 500);
+    }			
+    
+</script>
+
 </html>
