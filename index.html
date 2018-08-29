@@ -6,8 +6,9 @@
     <title></title>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-    	var ip = '127.0.0.1'; //172.18.0.3 // IP of server
-    	var port = '8090';
+    	var ip = '192.168.1.4'; //172.18.0.3 // IP of server
+    	//var ip = '127.0.0.1';
+        var port = '8090';
         var socket = io.connect('http://'+ip+':'+port);
         
         socket.on('connect', function () {
@@ -49,8 +50,9 @@
     <button onmousedown="parrotCommand('turnleft')" onmouseup="parrotCommand('stop')">server-event turn left</button>
     <button onmousedown="parrotCommand('turnright')" onmouseup="parrotCommand('stop')">server-event turn right</button>
 
+    <br><br><br>
 
-    <canvas id="gamearea" style="background-color:black"></canvas>
+    <canvas id="gamearea" style="background-color:rgba(0, 0, 0, 0.87)"></canvas>
     <div id="gamepadPrompt"></div>
     <div id="gamepadDisplay"></div>
 
@@ -64,6 +66,7 @@
 
 <script>
     var leftJoy; // Left Joystick on the XBox controller
+    var rightJoy;
     var hasGP = false;
     var repGP;
 
@@ -124,6 +127,26 @@
             ctx.arc(x, y, radius, 0, Math.PI*2, true);
             ctx.closePath();
             ctx.fill();
+        },
+
+        ring: function (radius) {
+            ctx.strokeStyle = "white";
+            ctx.beginPath();
+            ctx.arc(200, 200, radius, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.stroke();
+        },
+
+        triangle: function (col, xbuff, ybuff, p) {
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            //ctx.moveTo(0+xbuff, 25+ybuff);
+            //ctx.lineTo(25+xbuff, 50+ybuff);
+            //ctx.lineTo(25+xbuff, 0+ybuff);
+            ctx.moveTo(p[0]+xbuff, p[1]+ybuff);
+            ctx.lineTo(p[2]+xbuff, p[3]+ybuff);
+            ctx.lineTo(p[4]+xbuff, p[5]+ybuff);
+            ctx.fill();
         }
     };
 
@@ -139,6 +162,8 @@
             this.buffer = buff;
             this.axis1 = a1;
             this.axis2 = a2;
+
+            this.flag = 0;
         }
 
         this.move = function() {
@@ -159,11 +184,15 @@
             if (!isMouseDown && gp === null || !isMouseDown && gp === undefined ) {
                 this.x = this.buffer + canvas.jw/2;
                 this.y = canvas.jh/2;
+                
+                // When returned to centre of screen, send stop command
+                if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;} 
                 //return;
             
             // If mouse is down, move circle to mouses position within the canvas
             } else if (isMouseDown) {
-                if (mousePosition.x > this.buffer && mousePosition.x < this.buffer + canvas.jw) {
+                // mouse must be within the window its sposd to be in
+                if (mousePosition.x > this.buffer && mousePosition.x < this.buffer + canvas.jw && mousePosition.y > 0 && mousePosition.y < 400) {
                     this.x = mousePosition.x;
                     if (this.x > this.buffer + canvas.jw - this.r) { this.x = this.buffer + canvas.jw - this.r }
                     else if (this.x < this.buffer + this.r) { this.x = this.buffer + this.r }
@@ -171,30 +200,47 @@
                     if (this.y > canvas.jh - this.r) { this.y = canvas.jh - this.r }
                     else if (this.y < this.r) { this.y = this.r }
                     //return;
+                }
+            }
 
-                    //parrotCommand("moving");
-                    //parrotCommand("x: " + this.x + " y: " + this.y);
-                    // if y is in certain area, move up, otherwise down
-                    // if x is in certain area, move left, otherwise right
-                    if (this.y < 150) { parrotCommand("up"); }
-                    else if (this.y > 250) { parrotCommand("down"); }
-                    if (this.x < 150) { parrotCommand("turnleft"); }
-                    else if (this.x > 250) { parrotCommand("turnright"); }
+        }
+
+        this.sleep = function(milliseconds) {
+            var start = new Date().getTime();
+            for (var i = 0; i < 1e7; i++) {
+                if ((new Date().getTime() - start) > milliseconds){
+                break;
                 }
             }
         }
 
         this.draw = function () {
+            //draw.ring(this.r*3);
+            //draw.circle(200, 200, this.r*2, "black");
             draw.circle(this.x, this.y, this.r, this.col); // This draws to the specific canvas
+            //draw.triangle(this.col, 100, 175, [0,25,25,50,25,0]); // left
+            //draw.triangle(this.col, 275, 175, [25,25,0,50,0,0]); // right
+            //draw.triangle(this.col, 175, 100, [25,0,0,25,50,25]); // top
+            //draw.triangle(this.col, 175, 275, [0,0,25,25,50,0]); // bottom
+        }
+
+
+        this.msg = function (up, down, left, right) {
+
+            if (this.y < (canvas.jh/2) - 50) { parrotCommand(up); this.flag = 1; } // up
+            else if (this.y > (canvas.jh/2) + 50) { parrotCommand(down); this.flag = 1; } // down
+            if (this.x < this.buffer + (canvas.jw/2) - 50) { parrotCommand(left); this.flag = 1; } // turnleft
+            else if (this.x > this.buffer + (canvas.jw/2) + 50) { parrotCommand(right); this.flag = 1; } // turnright
+
         }
     }
     
     leftJoy = new joystickObj();
     leftJoy.init(0, 0, 1); // buffer, x axis, y axis
 
-    //rightJoy = new joystickObj();
+    rightJoy = new joystickObj();
     //rightJoy.init(canvas.jw, 2, 6); // Flight Joystick
-    //rightJoy.init(canvas.jw, 2, 3); // XBOX controller
+    rightJoy.init(canvas.jw, 2, 3); // XBOX controller
     
     function loop() {
         draw.clear();
@@ -206,7 +252,13 @@
         rightJoy.move();
     }
 
-    setInterval(loop, 30); // loop
+    setInterval(loop, 30); // call loop every 30ms
+
+    function msgLoop() {
+        leftJoy.msg("forward", "backward", "left", "right");
+        rightJoy.msg("up", "down", "turnleft", "turnright");
+    }
+    setInterval(msgLoop, 1000);
 
     // Display text information of joystick currently connected
     function reportOnGamepad() {
