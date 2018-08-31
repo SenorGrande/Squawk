@@ -6,7 +6,7 @@
     <title></title>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-    	var ip = '192.168.1.4'; //172.18.0.3 // IP of server
+    	var ip = '192.168.1.7'; //172.18.0.3 // IP of server
     	//var ip = '127.0.0.1';
         var port = '8090';
         var socket = io.connect('http://'+ip+':'+port);
@@ -178,6 +178,13 @@
 
                 this.x = this.buffer + axeX * canvas.jw/2 + canvas.jw/2;
                 this.y = axeY * canvas.jw/2 + canvas.jw/2;
+
+                if (this.x < canvas.jw/2 + 5 && this.x > canvas.jw/2 - 5) {
+                    if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
+                }
+                if (this.y < canvas.jh/2 + 5 && this.y > canvas.jh/2 - 5) {
+                    if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
+                }
             } 
 
             // If mouse is not down and no joystick, return to centre of screen
