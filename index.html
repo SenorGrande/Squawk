@@ -44,24 +44,16 @@
 <body>
     <button onclick="parrotCommand('takeoff')">server-event takeoff</button> 
     <button onclick="parrotCommand('land')">server-event land</button>
-    
-    <button onmousedown="parrotCommand('up')" onmouseup="parrotCommand('stop')">server-event up</button>
-    <button onmousedown="parrotCommand('down')" onmouseup="parrotCommand('stop')">server-event down</button>
-    
-    <button onmousedown="parrotCommand('turnleft')" onmouseup="parrotCommand('stop')">server-event turn left</button>
-    <button onmousedown="parrotCommand('turnright')" onmouseup="parrotCommand('stop')">server-event turn right</button>
-
-    <br><br><br>
+    <br>
 
     <canvas id="gamearea" style="background-color:rgba(0, 0, 0, 0.87)"></canvas>
     <div id="gamepadPrompt"></div>
     <div id="gamepadDisplay"></div>
 
-
-    <h2>Stuff received from the Parrot:</h2>
+    <h2>Messages received from the Parrot:</h2>
     <div id="divParrotStuff"></div>
 
-    <h2>Stuff sent from the Server:</h2>
+    <h2>Messages sent from the Server:</h2>
     <div id="divServerStuff"></div>
 </body>
 
