@@ -6,8 +6,8 @@
     <title></title>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-    	//var ip = '192.168.1.7'; 
-        var ip = '172.20.20.3' // IP of server
+    	var ip = '192.168.1.7'; 
+        //var ip = '172.20.20.3' // IP of server
     	//var ip = '127.0.0.1';
         var port = '8090';
         var socket = io.connect('http://'+ip+':'+port);
@@ -172,10 +172,10 @@
                 this.x = this.buffer + axeX * canvas.jw/2 + canvas.jw/2;
                 this.y = axeY * canvas.jw/2 + canvas.jw/2;
 
-                if (this.x < canvas.jw/2 + 5 && this.x > canvas.jw/2 - 5) {
+                if (this.x < canvas.jw/2 + 50 && this.x > canvas.jw/2 - 50) {
                     if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
                 }
-                if (this.y < canvas.jh/2 + 5 && this.y > canvas.jh/2 - 5) {
+                if (this.y < canvas.jh/2 + 50 && this.y > canvas.jh/2 - 50) {
                     if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
                 }
             } 
@@ -232,6 +232,14 @@
             if (this.x < this.buffer + (canvas.jw/2) - 50) { parrotCommand(left); this.flag = 1; } // turnleft
             else if (this.x > this.buffer + (canvas.jw/2) + 50) { parrotCommand(right); this.flag = 1; } // turnright
 
+            //
+            if (this.x < canvas.jw/2 + 50 && this.x > canvas.jw/2 - 50) {
+                if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
+            }
+            if (this.y < canvas.jh/2 + 50 && this.y > canvas.jh/2 - 50) {
+                if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
+            }
+
         }
     }
     
@@ -241,6 +249,7 @@
     rightJoy = new joystickObj();
     //rightJoy.init(canvas.jw, 2, 6); // Flight Joystick
     rightJoy.init(canvas.jw, 2, 3); // XBOX controller
+    //rightJoy.init(canvas.jw, 3, 4);
     
     function loop() {
         draw.clear();
@@ -258,7 +267,7 @@
         leftJoy.msg("forward", "backward", "left", "right");
         rightJoy.msg("up", "down", "turnleft", "turnright");
     }
-    setInterval(msgLoop, 200);
+    setInterval(msgLoop, 100);
 
     // Display text information of joystick currently connected
     function reportOnGamepad() {
