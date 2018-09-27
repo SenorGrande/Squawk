@@ -232,11 +232,11 @@
             if (this.x < this.buffer + (canvas.jw/2) - 50) { parrotCommand(left); this.flag = 1; } // turnleft
             else if (this.x > this.buffer + (canvas.jw/2) + 50) { parrotCommand(right); this.flag = 1; } // turnright
 
-            //
+            // If joystick in centre of constraint
             if (this.x < (canvas.jw/2) + 50 && this.x > (canvas.jw/2) - 50) {
                 if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
             }
-            if (this.y < (canvas.jh/2) + 50 && this.y > (canvas.jh/2) - 50) {
+            else if (this.y < (canvas.jh/2) + 50 && this.y > (canvas.jh/2) - 50) {
                 if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
             }
 
