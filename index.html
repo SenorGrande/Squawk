@@ -233,10 +233,10 @@
             else if (this.x > this.buffer + (canvas.jw/2) + 50) { parrotCommand(right); this.flag = 1; } // turnright
 
             //
-            if (this.x < canvas.jw/2 + 50 && this.x > canvas.jw/2 - 50) {
+            if (this.x < (canvas.jw/2) + 50 && this.x > (canvas.jw/2) - 50) {
                 if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
             }
-            if (this.y < canvas.jh/2 + 50 && this.y > canvas.jh/2 - 50) {
+            if (this.y < (canvas.jh/2) + 50 && this.y > (canvas.jh/2) - 50) {
                 if (this.flag == 1) { parrotCommand("stop"); this.flag = 0;}
             }
 
